@@ -80,7 +80,7 @@ impl DialogResponse {
             None => Err(self),
         }
     }
-    
+
     #[inline]
     /// Attempt to get the reply of the dialog as a reference.
     /// See [`Self::reply`].
@@ -124,11 +124,11 @@ where R: Any {
 }
 
 /// A dialog manager for showing dialogs on an egui::Context.
-/// 
+///
 /// # Example
 /// ```rust
 /// use egui_dialogs::Dialogs;
-/// 
+///
 /// # pub mod eframe {
 /// #     pub struct Frame;
 /// #     pub struct CreationContext<'a> { egui_ctx: &'a egui::Context }
@@ -136,11 +136,11 @@ where R: Any {
 /// #         fn update(&mut self, ctx: &egui::Context, frame: &mut Frame);
 /// #     }
 /// # }
-/// 
+///
 /// struct MyApp<'a> {
 ///     dialogs: Dialogs<'a>,
 /// }
-/// 
+///
 /// impl<'a> MyApp<'_> {
 ///     fn new(_cc: &eframe::CreationContext<'_>) -> Self {
 ///         MyApp {
@@ -148,11 +148,11 @@ where R: Any {
 ///         }
 ///     }
 /// }
-/// 
+///
 /// impl eframe::App for MyApp<'_> {
 ///     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
 ///         self.dialogs.show(ctx);
-/// 
+///
 ///         // when you want to show a dialog
 ///         self.dialogs.info("Hello", "This is a message");
 ///     }
@@ -160,18 +160,18 @@ where R: Any {
 /// ```
 pub struct Dialogs<'a> {
     dialogs: VecDeque<Box<dyn AbstractDialog + 'a>>,
-    
+
     /// The margin of the mask.
     /// This is useful if your window has a transparent margin or shadow.
     pub mask_margin: Margin,
     /// The rounding of the mask.
     /// This is useful if your window has rounded corners.
     pub mask_rounding: Rounding,
-    
+
     /// The animation function.
     /// Set to None to disable animation.
     pub animation: Option<fn(f32) -> f32>,
-    
+
     fading_dialog: Option<Box<dyn AbstractDialog + 'a>>,
 
     /// Override the style of the dialogs.
@@ -338,13 +338,13 @@ impl<'a> Dialogs<'a> {
 
 impl Dialogs<'_> {
     const ID_NAME: &'static str = "dialog_mask";
-    
+
     /// Paint a mask with the given color.
     /// This will intercept all user interactions with background.
     /// Returns the painted opacity.
     pub fn show_mask(&self, ctx: &egui::Context, color: Color32, dialog_on: bool) -> f32 {
         let id = Id::new((ctx.viewport_id(), Self::ID_NAME));
-        
+
         let how_on = match self.animation {
             Some(easing) => {
                 let value = ctx.animate_bool_with_easing(
@@ -359,26 +359,28 @@ impl Dialogs<'_> {
             },
             None => if dialog_on { 1. } else { return 0.; },
         };
-        
-        let layer_id = LayerId {
-            order: egui::Order::PanelResizeLine,
-            id,
-        };
+
+        // let layer_id = LayerId {
+        //     // order: egui::Order::PanelResizeLine,
+        //     order: egui::Order::Background,
+        //     id,
+        // };
 
         let mask_rect = ctx.screen_rect() - self.mask_margin;
-        let mut mask_ui = Ui::new(
+        let mut ui = Ui::new(
             ctx.clone(),
-            layer_id,
             id,
             UiBuilder::new().max_rect(mask_rect)
         );
 
-        mask_ui.set_opacity(how_on);
+        ui.allocate_new_ui(UiBuilder::new().layer_id(LayerId::background()), |ui| {
+            ui.set_opacity(how_on);
 
-        mask_ui.painter().rect_filled(mask_rect, self.mask_rounding, color);
-        
-        // cover the layer to forbid interact with background widgets
-        mask_ui.allocate_rect(mask_rect, Sense::hover());
+            ui.painter().rect_filled(mask_rect, self.mask_rounding, color);
+
+            // cover the layer to forbid interact with background widgets
+            ui.allocate_rect(mask_rect, Sense::hover());
+        });
 
         // forbid focus on the background
         let focused = ctx.memory(|r| r.focused())
@@ -389,7 +391,7 @@ impl Dialogs<'_> {
                 focused.surrender_focus();
             }
         }
-        
+
         how_on
     }
 
@@ -444,15 +446,15 @@ impl Dialogs<'_> {
             Some(ref mut fading_dialog) => (Some(fading_dialog), true),
             None => (self.dialogs.front_mut(), false),
         };
-        
+
         if let Some(dialog) = dialog {
             let id = dialog.id();
-            
+
             let mut response = DialogResponse {
                 id,
                 reply: None
             };
-            
+
             let outer_style = if let Some(ref style) = self.style {
                 let outer_style = ctx.style();
                 ctx.set_style(Arc::clone(style));
@@ -460,7 +462,7 @@ impl Dialogs<'_> {
             } else {
                 None
             };
-            
+
             let dctx = &DialogContext {
                 dialog_id: id,
                 animation: self.animation,

@@ -11,3 +11,6 @@ readme = "README.md"
 [dependencies]
 egui = "0.29.1"
 sys-locale = "0.3.1"
+
+[patch.crates-io]
+egui = { git = 'https://github.com/eswartz/egui.git', branch = 'extra-keys' }
