@@ -315,7 +315,7 @@ where
                 ui.horizontal_top(|ui| {
                     const IMAGE_WIDTH: f32 = 48.;
 
-                    let max_width = dctx.mask_rect.width() - ui.spacing().window_margin.right - 24.; // reserve some space for better appearance
+                    let max_width = dctx.mask_rect.width() - ui.spacing().window_margin.right as f32 - 24.; // reserve some space for better appearance
                     let max_height = {
                         let text_height = ui
                             .style()
@@ -330,7 +330,7 @@ where
                             - ui.spacing().item_spacing.y
                             - ui.spacing().button_padding.y * 2.
                             - text_height
-                            - ui.spacing().window_margin.bottom
+                            - ui.spacing().window_margin.bottom as f32
                             - 24. // reserve some space for better appearance
                     };
 
